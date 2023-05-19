@@ -1,0 +1,27 @@
+[
+  {
+    "jid1": "vutl@localhost",
+    "jid2": "hello@localhost",
+    "state": "friend"
+  },
+
+  {
+    "jid1": "vutl@localhost",
+    "jid2": "thuongnguyen@localhost",
+    "state": "friend"
+  },
+
+  {
+    "jid1": "vutl@localhost",
+    "jid2": "thuongnguyen@localhost",
+    "state": "unfriend"
+  },
+
+  {
+    "jid1": "vutl@localhost",
+    "jid2": "tannhu@localhost",
+    "state": "friend"
+  }
+]
+
+

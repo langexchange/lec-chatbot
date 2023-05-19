@@ -1,0 +1,15 @@
+<p>{{ hello_msg }}</p>
+<p>{{ feature_intro }}</p>
+{% if features %}
+<ol> 
+  {% for _, f in features.items() %}
+    <li>
+      <b> {{ f["name"] }} :</b> <span> {{ f["description"] }} </span>
+      <ul>
+        <li> Example: {{f["example"]}}</li>
+      </ul>
+      <span>{{f["addition_note"]}}</span>
+    </li>
+  {% endfor %}
+</ol>
+{% endif %}

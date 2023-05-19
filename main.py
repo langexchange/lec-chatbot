@@ -5,6 +5,8 @@ from argparse import ArgumentParser
 import slixmpp
 import environ
 import os
+from chatbot.chatworker.main import ChatBotConsumer
+from jinja2 import Environment, FileSystemLoader
 
 env = environ.Env()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -14,6 +16,8 @@ BOT_PASSWORD = env('BOT_PASSWORD')
 BOT_JID = env('BOT_JID')
 LANGEX_XMPP_HOSTNAME = env('LANGEX_XMPP_HOSTNAME')
 LANGEX_XMPP_PORT = env('LANGEX_XMPP_PORT')
+APP_BROKERS = env('APP_BROKERS')
+
 
 
 class EchoBot(slixmpp.ClientXMPP):
@@ -22,7 +26,6 @@ class EchoBot(slixmpp.ClientXMPP):
     A simple Slixmpp bot that will echo messages it
     receives, along with a short thank you message.
     """
-
     def __init__(self, jid, password, sasl_mech, plugin_config):
 
       slixmpp.ClientXMPP.__init__(self, jid, password, sasl_mech=sasl_mech, plugin_config= plugin_config)
@@ -36,20 +39,64 @@ class EchoBot(slixmpp.ClientXMPP):
 
       self.add_event_handler("session_start", self.start)
 
-      self.register_plugin('AudioBotPlugin', module="chatbot.plugins.audio_bot.plugin")
+      # Register feature
+      self.register_plugin('PronuncAssessFeatures', module="chatbot.features.pronunc_assess.plugin")
       
+
+      # Register ChatBotConsumer
+      self.chatBotConsumer =  ChatBotConsumer(bootstrap_servers=APP_BROKERS, group_id="chatbot", auto_offset_reset='latest', enable_auto_commit=False)
+      self.chatBotConsumer.register("chathelper-userinfo", self.onBoardUserHandler)
+
+      # Chatbot feature                                                
+      self.chatbotFeatureDescriptions = { # TODO: Need have a Langex Plugin manager when the app scales.
+         "pronunc_assess": {
+            "name": "Pronunciation Assessment",
+            "description": "I can help you to evaluate your pronunciation whenever you add your recording voice (See tool bar) accompanying with the text you have said",
+            "example": "MOCK",
+            "addition_note": "The default language will be accessed is your target language. If you want to assess another language please use command !pronunc_assess*{your_language}*: {The text you intend to say}" 
+         }
+      }
+
+      self.onBoardHelloMessages = {
+        "hello": "Hello %s, Welcome to LangExchange community. I'am LangEx bot " + u'\u1F916' + "!!",
+        "intro_feature": "I can help you to practice various of languages. Here are list of features I can support:"
+      }
+      
+      # Init Jinja2 teamplate environment
+      self.template = Environment(loader=FileSystemLoader('./templates'))
+
+
     def oob_handler(self):
         print("OOB_handler detected")
 
     async def start(self, event):
-        self.send_presence()
-        await self.get_roster()
+      self.send_presence()
+      await self.get_roster()
+      await self.chatBotConsumer.initChatBotConsumer()
 
-    # def message(self, msg):
-    #   if msg['type'] in ('chat', 'normal'):
-    #       msg.reply("Thanks for sending\n%(body)s" % msg).send()
+    def onBoardUserHandler(self, new_user):
+      """
+      {
+        "jid": "user_id1@localhost",
+        "fullname": "",
+        "is_created": true,
+      },
+      """
+      if "is_created" not in new_user or new_user["is_created"] == False:
+        return
+      
+      # Create message
+      msg_t = self.template.get_template('onboard.html')
+      msg_params = {
+         "hello_msg": self.onBoardHelloMessages["hello"] % (new_user["fullname"]), 
+        "feature_intro": self.onBoardHelloMessages["intro_feature"],
+        "features": self.chatbotFeatureDescriptions 
+      }
+      
+      msg = msg_t.render(msg_params)
+      send_msg = self.make_message(mto = new_user["jid"], mbody = msg, mtype="chat", mfrom=self.jid)
+      send_msg.send()
     
-
 
 
 if __name__ == '__main__':

@@ -1,0 +1,31 @@
+[
+  {
+    "jid": "123@localhost",
+    "fullname": "Vu Tran",
+    "nickname": "Jax Vu"
+  },
+  {
+    "jid": "213@localhost",
+    "fullname": "Thuong Nguyen",
+    "nickname": "Van Thuong"
+  },
+  {
+    "jid": "123@localhost",
+    "nickname": "Vu dep trai"
+  },
+  {
+    "jid": "123@localhost",
+    "nickname": "Vu dep trai",
+    "avatar_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Young_girl_smiling_in_sunshine_%282%29.jpg/1200px-Young_girl_smiling_in_sunshine_%282%29.jpg"
+  },
+  {
+    "jid": "321@localhost",
+    "nickname": "Vu dep trai",
+    "avatar_url": "https://bountycdn.azureedge.net/~/media/b9bedc08353044c5b7e354858f0c4db1.ashx?la=en"
+  },
+  {
+    "jid": "hello@localhost",
+    "fullname": "Vu Tran",
+    "is_created": true
+  }
+]

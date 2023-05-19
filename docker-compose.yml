@@ -10,7 +10,14 @@ services:
       - BOT_JID=chatbot@localhost
       - LANGEX_XMPP_HOSTNAME=localhost
       - LANGEX_XMPP_PORT=5222
+      - APP_BROKERS=kafka:9092
     volumes:
       - ./whisper_langex/models/faster_whisper:/usr/local/src/whisper_langex/models/faster_whisper
-      - ./whisper_langex/models/whisper:/usr/local/src/whisper_langex/models/whisper   
+      - ./whisper_langex/models/whisper:/usr/local/src/whisper_langex/models/whisper
 
+    networks:
+      - vutl
+
+networks:
+  vutl:
+    external: True

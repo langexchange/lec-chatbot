@@ -1,8 +1,8 @@
-import logging
-from getpass import getpass
-from argparse import ArgumentParser
-
 import slixmpp
+from slixmpp.exceptions import IqError
+import json
+import logging
+from argparse import ArgumentParser
 import environ
 import os
 from chatbot.chatworker.main import ChatBotConsumer
@@ -18,7 +18,7 @@ LANGEX_XMPP_HOSTNAME = env('LANGEX_XMPP_HOSTNAME')
 LANGEX_XMPP_PORT = env('LANGEX_XMPP_PORT')
 APP_BROKERS = env('APP_BROKERS')
 
-
+logger = logging.getLogger(__file__)
 
 class EchoBot(slixmpp.ClientXMPP):
 
@@ -26,6 +26,8 @@ class EchoBot(slixmpp.ClientXMPP):
     A simple Slixmpp bot that will echo messages it
     receives, along with a short thank you message.
     """
+    name = "LangExchange Bot"
+    info_path = "./assets/chatbotinfo.json"
     def __init__(self, jid, password, sasl_mech, plugin_config):
 
       slixmpp.ClientXMPP.__init__(self, jid, password, sasl_mech=sasl_mech, plugin_config= plugin_config)
@@ -35,6 +37,7 @@ class EchoBot(slixmpp.ClientXMPP):
       self.register_plugin('xep_0004') # Data Forms
       self.register_plugin('xep_0060') # PubSub
       self.register_plugin('xep_0199') # XMPP Ping
+      self.register_plugin('xep_0054') # Vcard
       self.register_plugin('xep_0066')
 
       self.add_event_handler("session_start", self.start)
@@ -62,9 +65,8 @@ class EchoBot(slixmpp.ClientXMPP):
         "intro_feature": "I can help you to practice various of languages. Here are list of features I can support:"
       }
       
-      # Init Jinja2 teamplate environment
-      self.template = Environment(loader=FileSystemLoader('./templates'))
-
+      # Init Jinja2 template environment
+      self.template = Environment(loader=FileSystemLoader('./assets/templates'))
 
     def oob_handler(self):
         print("OOB_handler detected")
@@ -72,7 +74,28 @@ class EchoBot(slixmpp.ClientXMPP):
     async def start(self, event):
       self.send_presence()
       await self.get_roster()
+      await self.update_vcard()
+
+      # Should call at the end
       await self.chatBotConsumer.initChatBotConsumer()
+      
+
+    async def update_vcard(self):
+      vcard = self.plugin["xep_0054"].make_vcard()
+      vcard["FN"] = self.name
+      
+      with open(self.info_path, 'rb') as fd:
+        try: 
+          bot_info = json.load(fd)
+        except ValueError:
+          logger.exception("Chatbot info fail to be parsed")
+          raise('Decoding JSON failed')
+        vcard["PHOTO"]["EXTVAL"] = bot_info["avatar_url"]     
+      try: 
+        await self.plugin["xep_0054"].publish_vcard(vcard = vcard, jid = self.jid)
+      except IqError as e:
+        logger.error("Error when publish_vcard %s", e.iq['error']['condition'])
+
 
     def onBoardUserHandler(self, new_user):
       """
@@ -88,7 +111,7 @@ class EchoBot(slixmpp.ClientXMPP):
       # Create message
       msg_t = self.template.get_template('onboard.html')
       msg_params = {
-         "hello_msg": self.onBoardHelloMessages["hello"] % (new_user["fullname"]), 
+        "hello_msg": self.onBoardHelloMessages["hello"] % (new_user["fullname"]), 
         "feature_intro": self.onBoardHelloMessages["intro_feature"],
         "features": self.chatbotFeatureDescriptions 
       }

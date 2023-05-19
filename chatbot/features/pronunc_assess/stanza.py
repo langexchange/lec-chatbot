@@ -1,19 +1,9 @@
 from slixmpp.xmlstream import ElementBase
 
-class AudioBotReq(ElementBase):
+class PronuncAssessStanza(ElementBase):
 
     """
     """
-
-    name = 'request'
-    namespace = 'langex:audiobot'
-    plugin_attrib = 'aud_crr_req'
-
-class AudioBot(ElementBase):
-
-    """
-    """
-
-    name = 'audiobot'
-    namespace = 'langex:audiobot'
-    plugin_attrib = 'audi_crr'
+    namespace = 'langex:chatbot:pronunc_assess'
+    name = 'pronunc_assess'
+    plugin_attrib = 'pronunc_assess'

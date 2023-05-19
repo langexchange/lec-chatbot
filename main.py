@@ -1,12 +1,19 @@
 import slixmpp
 from slixmpp.exceptions import IqError
+from slixmpp.xmlstream import register_stanza_plugin
+from slixmpp.stanza import Message
+
+from chatbot.chatworker.main import ChatBotConsumer
+from chatbot.stanza.chatbot import LangExBot, OnBoard
+
 import json
 import logging
 from argparse import ArgumentParser
 import environ
 import os
-from chatbot.chatworker.main import ChatBotConsumer
 from jinja2 import Environment, FileSystemLoader
+
+
 
 env = environ.Env()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -41,6 +48,9 @@ class EchoBot(slixmpp.ClientXMPP):
       self.register_plugin('xep_0066')
 
       self.add_event_handler("session_start", self.start)
+
+      # Register chatbot stanza
+      register_stanza_plugin(Message, LangExBot)
 
       # Register feature
       self.register_plugin('PronuncAssessFeatures', module="chatbot.features.pronunc_assess.plugin")
@@ -97,6 +107,11 @@ class EchoBot(slixmpp.ClientXMPP):
         logger.error("Error when publish_vcard %s", e.iq['error']['condition'])
 
 
+    def makeLangExBotMessage(self, **attr):
+      normal_msg = self.make_message(mto = attr["mto"], mbody = attr["mbody"], mtype= attr["mtype"], mfrom= attr["mfrom"])
+      normal_msg.append(LangExBot())
+      return normal_msg
+    
     def onBoardUserHandler(self, new_user):
       """
       {
@@ -108,7 +123,7 @@ class EchoBot(slixmpp.ClientXMPP):
       if "is_created" not in new_user or new_user["is_created"] == False:
         return
       
-      # Create message
+      # Create onboard message
       msg_t = self.template.get_template('onboard.html')
       msg_params = {
         "hello_msg": self.onBoardHelloMessages["hello"] % (new_user["fullname"]), 
@@ -117,7 +132,8 @@ class EchoBot(slixmpp.ClientXMPP):
       }
       
       msg = msg_t.render(msg_params)
-      send_msg = self.make_message(mto = new_user["jid"], mbody = msg, mtype="chat", mfrom=self.jid)
+      send_msg = self.makeLangExBotMessage(mto = new_user["jid"], mbody = msg, mtype="chat", mfrom=self.jid)
+      send_msg["langexbot"].append(OnBoard())
       send_msg.send()
     
 

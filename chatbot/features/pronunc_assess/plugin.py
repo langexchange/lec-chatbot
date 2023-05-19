@@ -8,7 +8,7 @@ as a tutorial for creating Slixmpp plugins.
 from slixmpp.plugins.base import BasePlugin
 from slixmpp.xmlstream.handler import CoroutineCallback
 from slixmpp.xmlstream.matcher.xpath import MatchXPath
-from slixmpp.xmlstream import ElementBase, ET, JID, register_stanza_plugin
+from slixmpp.xmlstream import  register_stanza_plugin
 from slixmpp.stanza import Iq, Message
 from slixmpp.plugins.xep_0066.stanza import OOB
 import requests
@@ -20,8 +20,9 @@ from Bio import Align
 import functools
 
 from chatbot.whisper.model import run_asr
-from chatbot.features.pronunc_assess.stanza import AudioBot, AudioBotReq
+from chatbot.features.pronunc_assess.stanza import PronuncAssessStanza
 import mimetypes
+from chatbot.stanza.chatbot import LangExBot
 
 
 
@@ -52,9 +53,7 @@ class PronuncAssessFeatures(BasePlugin):
                      self.handleLangexChatBotMessage
                      ))
         
-        register_stanza_plugin(Message, AudioBot)
-        register_stanza_plugin(Message, AudioBotReq)
-        register_stanza_plugin(Message, OOB)
+        register_stanza_plugin(LangExBot, PronuncAssessStanza)
 
     def post_init(self):
       BasePlugin.post_init(self)
@@ -223,6 +222,7 @@ class PronuncAssessFeatures(BasePlugin):
       message += "\nThis is what you said: "
       message += (heard_msg)
       
+      # TODO: Change to make LangEx message
       crr_per = self.cal_accuracy_per(accuracy_list)
       match_str = self.transform2_match_str(accuracy_list, origin_msg)
       for assess_pnt, eval in self.assess_list[::-1]:
@@ -230,8 +230,8 @@ class PronuncAssessFeatures(BasePlugin):
             message += ("\n{}, your score is {:.2f}, this is how your voice match: {}".format(eval, crr_per*100, match_str))
             break
       
-      send_msg = self.xmpp.make_message(mto = msg_stanza["from"], mbody = message, mtype=msg_stanza["type"], mfrom=self.xmpp.jid)
-      send_msg.append(AudioBot())
+      send_msg = self.xmpp.makeLangExBotMessage(mto = msg_stanza["from"], mbody = message, mtype=msg_stanza["type"], mfrom=self.xmpp.jid)
+      send_msg["langexbot"].append(PronuncAssessStanza())
 
       send_msg.send()
       

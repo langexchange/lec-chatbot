@@ -20,7 +20,7 @@ from Bio import Align
 import functools
 
 from chatbot.whisper.model import run_asr
-from chatbot.plugins.audio_bot.stanza import AudioBot, AudioBotReq
+from chatbot.features.pronunc_assess.stanza import AudioBot, AudioBotReq
 import mimetypes
 
 
@@ -28,12 +28,11 @@ import mimetypes
 
 
 
-class AudioBotPlugin(BasePlugin):
+class PronuncAssessFeatures(BasePlugin):
     """
     This plugin is used to create langex audio transcript chatbot
     """
-    name = 'AudioBotPlugin'
-    description = 'AudioBotPlugin based on xep_0066'
+    name = "Pronunciation Assessment",
     dependencies = {'xep_0030', 'xep_0066'}
     assess_list = [[0, "You must be a newbie with this english"], [0.3, "You need to practice more :(("], [0.5, "Not very bad, you have some errors"], [0.9, "You are good. A little bit to be perfect"], [1, "Perfect!! You have no error in your pronunciation"]]
     
@@ -74,7 +73,7 @@ class AudioBotPlugin(BasePlugin):
 
     def parseCommand(self, msg_text):
       """
-        Command syntax: [command][_{op1}]*: input
+        Command syntax: ![command][*{op1}]*: input
       """
       semi_sep_list = msg_text.split(":")
       command = ""
@@ -228,7 +227,7 @@ class AudioBotPlugin(BasePlugin):
       match_str = self.transform2_match_str(accuracy_list, origin_msg)
       for assess_pnt, eval in self.assess_list[::-1]:
          if crr_per >= assess_pnt:
-            message += ("\n{}, your score is {%.2f}, this is how your voice match: {}".format(eval, crr_per, match_str))
+            message += ("\n{}, your score is {:.2f}, this is how your voice match: {}".format(eval, crr_per*100, match_str))
             break
       
       send_msg = self.xmpp.make_message(mto = msg_stanza["from"], mbody = message, mtype=msg_stanza["type"], mfrom=self.xmpp.jid)

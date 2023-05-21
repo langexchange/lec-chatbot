@@ -14,3 +14,4 @@ psycopg[c,pool]==3.1.7
 
 aiokafka==0.8.0
 Jinja2==3.1.2
+pycountry==22.3.5

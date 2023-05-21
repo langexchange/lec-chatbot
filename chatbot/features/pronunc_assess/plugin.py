@@ -11,22 +11,23 @@ from slixmpp.xmlstream.matcher.xpath import MatchXPath
 from slixmpp.xmlstream import  register_stanza_plugin
 from slixmpp.stanza import Iq, Message
 from slixmpp.plugins.xep_0066.stanza import OOB
-import requests
+
 import io 
 import aiohttp
 import urlextract
 import re
 from Bio import Align
 import functools
-
+from jinja2 import Environment, FileSystemLoader
+      
 from chatbot.whisper.model import run_asr
 from chatbot.features.pronunc_assess.stanza import PronuncAssessStanza
 import mimetypes
 from chatbot.stanza.chatbot import LangExBot
+import pycountry
+import os
 
-
-
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class PronuncAssessFeatures(BasePlugin):
@@ -39,11 +40,11 @@ class PronuncAssessFeatures(BasePlugin):
     
     supported_commands = {
       "pronunc_assess": {
-        "language": ['af', 'am', 'ar', 'as', 'az', 'ba', 'be', 'bg', 'bn', 'bo', 'br', 'bs', 'ca', 'cs', 'cy', 'da', 'de', 'el', 'en', 'es', 'et', 'eu', 'fa', 'fi', 'fo', 'fr', 'gl', 'gu', 'ha', 'haw', 'he', 'hi', 'hr', 'ht', 'hu', 'hy', 'id', 'is', 'it', 'ja', 'jw', 'ka', 'kk', 'km', 'kn', 'ko', 'la', 'lb', 'ln', 'lo', 'lt', 'lv', 'mg', 'mi', 'mk', 'ml', 'mn', 'mr', 'ms', 'mt', 'my', 'ne', 'nl', 'nn', 'no', 'oc', 'pa', 'pl', 'ps', 'pt', 'ro', 'ru', 'sa', 'sd', 'si', 'sk', 'sl', 'sn', 'so', 'sq', 'sr', 'su', 'sv', 'sw', 'ta', 'te', 'tg', 'th', 'tk', 'tl', 'tr', 'tt', 'uk', 'ur', 'uz', 'vi', 'yi', 'yo', 'zh', 'Afrikaans', 'Albanian', 'Amharic', 'Arabic', 'Armenian', 'Assamese', 'Azerbaijani', 'Bashkir', 'Basque', 'Belarusian', 'Bengali', 'Bosnian', 'Breton', 'Bulgarian', 'Burmese', 'Castilian', 'Catalan', 'Chinese', 'Croatian', 'Czech', 'Danish', 'Dutch', 'English', 'Estonian', 'Faroese', 'Finnish', 'Flemish', 'French', 'Galician', 'Georgian', 'German', 'Greek', 'Gujarati', 'Haitian', 'Haitian Creole', 'Hausa', 'Hawaiian', 'Hebrew', 'Hindi', 'Hungarian', 'Icelandic', 'Indonesian', 'Italian', 'Japanese', 'Javanese', 'Kannada', 'Kazakh', 'Khmer', 'Korean', 'Lao', 'Latin', 'Latvian', 'Letzeburgesch', 'Lingala', 'Lithuanian', 'Luxembourgish', 'Macedonian', 'Malagasy', 'Malay', 'Malayalam', 'Maltese', 'Maori', 'Marathi', 'Moldavian', 'Moldovan', 'Mongolian', 'Myanmar', 'Nepali', 'Norwegian', 'Nynorsk', 'Occitan', 'Panjabi', 'Pashto', 'Persian', 'Polish', 'Portuguese', 'Punjabi', 'Pushto', 'Romanian', 'Russian', 'Sanskrit', 'Serbian', 'Shona', 'Sindhi', 'Sinhala', 'Sinhalese', 'Slovak', 'Slovenian', 'Somali', 'Spanish', 'Sundanese', 'Swahili', 'Swedish', 'Tagalog', 'Tajik', 'Tamil', 'Tatar', 'Telugu', 'Thai', 'Tibetan', 'Turkish', 'Turkmen', 'Ukrainian', 'Urdu', 'Uzbek', 'Valencian', 'Vietnamese', 'Welsh', 'Yiddish', 'Yoruba']
-      }
-      , 
+          "languages_iso_6391": ['af', 'ar', 'az', 'be', 'bg', 'bs', 'ca', 'cs', 'cy', 'da', 'de', 'el', 'en', 'es', 'et', 'fa', 'fi', 'fr', 'gl', 'he', 'hi', 'hr', 'hu', 'hy', 'id', 'is', 'it', 'ja', 'kk', 'kn', 'ko', 'lt', 'lv', 'mi', 'mk', 'mr', 'ms', 'ne', 'nl', 'no', 'pl', 'pt', 'ro', 'ru', 'sk', 'sl', 'sr', 'sv', 'sw', 'ta', 'th', 'tl', 'tr', 'uk', 'ur', 'vi', 'zh'],
+          "languages": ['Afrikaans', 'Arabic', 'Azerbaijani', 'Belarusian', 'Bulgarian', 'Bosnian', 'Catalan', 'Czech', 'Welsh', 'Danish', 'German', 'Greek', 'English', 'Spanish', 'Estonian', 'Persian', 'Finnish', 'French', 'Galician', 'Hebrew', 'Hindi', 'Croatian', 'Hungarian', 'Armenian', 'Indonesian', 'Icelandic', 'Italian', 'Japanese', 'Kazakh', 'Kannada', 'Korean', 'Lithuanian', 'Latvian', 'Maori', 'Macedonian', 'Marathi', 'Malay', 'Nepali', 'Dutch', 'Norwegian', 'Polish', 'Portuguese', 'Romanian', 'Russian', 'Slovak', 'Slovenian', 'Serbian', 'Swedish', 'Swahili', 'Tamil', 'Thai', 'Tagalog', 'Turkish', 'Ukrainian', 'Urdu', 'Vietnamese', 'Chinese'],
 
-      "vocab_schedule": []
+          "vocab_schedule": []
+      }
     }
 
     def plugin_init(self):
@@ -54,6 +55,8 @@ class PronuncAssessFeatures(BasePlugin):
                      ))
         
         register_stanza_plugin(LangExBot, PronuncAssessStanza)
+        self.template = Environment(loader=FileSystemLoader(os.path.join(BASE_DIR,'templates'))) 
+        
 
     def post_init(self):
       BasePlugin.post_init(self)
@@ -168,11 +171,10 @@ class PronuncAssessFeatures(BasePlugin):
       else:
         language = opts[0]
       
-      
-      if language not in self.supported_commands["pronunc_assess"]["language"]:
+      if language not in self.supported_commands["pronunc_assess"]["languages"] and language not in self.supported_commands["pronunc_assess"]["languages_iso_6391"]:
         return {
           "status": 0,
-          "msg": "Sorry, Your language has not supported to perform the assessment. Try: {}".format(self.supported_commands["pronunc_assess"]["language"])
+          "msg": "Sorry, Your language has not been supported to perform the assessment. Try: {}".format([x[1] for x in self.supported_commands["pronunc_assess"]["languages"]] )
         }
       
       audio_file = await self.downloadFile(url)
@@ -198,41 +200,67 @@ class PronuncAssessFeatures(BasePlugin):
         }
       
 
+    def encompass_wrong_text(self, str):
+      wrong_text = str.strip()
+
+      if not wrong_text:
+        return ""
+      
+      wrong_word_list = wrong_text.split(" ")
+      for i, wrong_word in enumerate(wrong_word_list): wrong_word_list[i] = "<r>{}</r>".format(wrong_word)
+      return " ".join(wrong_word_list)
+
     def transform2_match_str(self, accuracy_list, origin_input):
       pre_mindex_end = 0
       result_str = ""
       crr_list = list(filter(lambda x: x[1] == True, accuracy_list))
+      # TODO: Add error tag to assessment msg.
       for word, _ in crr_list:
         match = re.search(word, origin_input[pre_mindex_end:])
         
         mindex_start = pre_mindex_end + match.start()
         mindex_end = pre_mindex_end + match.end()
-        result_str += (origin_input[pre_mindex_end : mindex_start]) 
+        
+        wrong_encompassed_text = self.encompass_wrong_text((origin_input[pre_mindex_end : mindex_start])) 
+        result_str += " " if not wrong_encompassed_text else " " + wrong_encompassed_text + " "
         result_str +=("<g>{}</g>".format(origin_input[mindex_start:mindex_end]))
 
         pre_mindex_end = mindex_end
       
-      result_str += origin_input[pre_mindex_end:]
+      result_str += " " + self.encompass_wrong_text(origin_input[pre_mindex_end:])
       return result_str
                         
        
-    def send_pronunc_peformance(self, origin_msg, heard_msg, accuracy_list, language, msg_stanza):
-      # Send transcribe message
-      message = "Pronunciation assessment in language: {}".format(language)
-      message += "\nThis is what you said: "
-      message += (heard_msg)
-      
-      # TODO: Change to make LangEx message
+    def send_pronunc_peformance(self, origin_msg, heard_msg, accuracy_list, language_iso, msg_stanza):
       crr_per = self.cal_accuracy_per(accuracy_list)
-      match_str = self.transform2_match_str(accuracy_list, origin_msg)
+      match_text = self.transform2_match_str(accuracy_list, origin_msg)
+      assessment = ""
       for assess_pnt, eval in self.assess_list[::-1]:
          if crr_per >= assess_pnt:
-            message += ("\n{}, your score is {:.2f}, this is how your voice match: {}".format(eval, crr_per*100, match_str))
+            assessment = ("{}, your score is {:.2f}, this is how your voice match: ".format(eval, crr_per*100))
             break
       
-      send_msg = self.xmpp.makeLangExBotMessage(mto = msg_stanza["from"], mbody = message, mtype=msg_stanza["type"], mfrom=self.xmpp.jid)
+      # Transform ISO code to language
+      index = self.supported_commands["pronunc_assess"]["languages_iso_6391"].index(language_iso)
+      msg_t = self.template.get_template('pronunc_assess.html')
+      msg_params = {
+        "language_para": {
+           "text": "Pronunciation assessment in language:",
+           "language": self.supported_commands["pronunc_assess"]["languages"][index],
+        },
+        "heard_para": {
+          "text": "This is what you said:",
+          "heard_text": heard_msg
+        },
+        "match_para": {
+          "text": assessment,
+          "match_text": match_text
+        },
+      }
+      msg = msg_t.render(msg_params)
+      
+      send_msg = self.xmpp.makeLangExBotMessage(mto = msg_stanza["from"], mbody = msg, mtype=msg_stanza["type"], mfrom=self.xmpp.jid)
       send_msg["langexbot"].append(PronuncAssessStanza())
-
       send_msg.send()
       
 
@@ -278,7 +306,6 @@ class PronuncAssessFeatures(BasePlugin):
       letters_only = ' '.join(letter_pattern.findall(str))
 
       return letters_only
-
 
     def extract_text(self, url_msg):
       extractor = urlextract.URLExtract()

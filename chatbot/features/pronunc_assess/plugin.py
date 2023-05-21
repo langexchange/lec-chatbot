@@ -24,8 +24,8 @@ from chatbot.whisper.model import run_asr
 from chatbot.features.pronunc_assess.stanza import PronuncAssessStanza
 import mimetypes
 from chatbot.stanza.chatbot import LangExBot
-import pycountry
 import os
+from chatbot.db.vcard.query import vcard_model
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -93,7 +93,7 @@ class PronuncAssessFeatures(BasePlugin):
             opts = match.group(2)[1:].split("*")
 
       if not command:
-        return "pronunc_assess", [], msg_text, ""  #Treat all string as sample that gonna assess
+        return "pronunc_assess", [], msg_text, ""  #Treat all string as sample that is gonna assess the pronunciation
       
       if command not in self.supported_commands:
         return None, [], "", "Sorry, I have not supported the command {}".format(command)
@@ -140,7 +140,7 @@ class PronuncAssessFeatures(BasePlugin):
           return io.BytesIO(content)
           
 
-    async def handlePronuncAssessment(self, opts, url, body, userJid):
+    async def handlePronuncAssessment(self, opts, url, body, user_jid):
       """
       Return: 
         {
@@ -167,14 +167,20 @@ class PronuncAssessFeatures(BasePlugin):
       if not opts:
         # TODO: getTargetLanguage from database
         # self.getTargetLanguage(userJid)
-        language = "en"
+        raw_target_lang = await vcard_model.getTargetLanguageWithJid(user_jid.bare)
+        if raw_target_lang == None: 
+          language = "en" #Default language if the user does not have target language
+        else:
+          raw_target_lang.lower()
+          hyphen_index = raw_target_lang.find("-")
+          language = raw_target_lang.lower() if hyphen_index == -1 else (raw_target_lang.split("-")[0]).lower()
       else:
         language = opts[0]
       
       if language not in self.supported_commands["pronunc_assess"]["languages"] and language not in self.supported_commands["pronunc_assess"]["languages_iso_6391"]:
         return {
           "status": 0,
-          "msg": "Sorry, Your language has not been supported to perform the assessment. Try: {}".format([x[1] for x in self.supported_commands["pronunc_assess"]["languages"]] )
+          "msg": "Sorry, Your language has not been supported to perform the assessment. Try: {}".format(self.supported_commands["pronunc_assess"]["languages"])
         }
       
       audio_file = await self.downloadFile(url)
@@ -209,6 +215,7 @@ class PronuncAssessFeatures(BasePlugin):
       wrong_word_list = wrong_text.split(" ")
       for i, wrong_word in enumerate(wrong_word_list): wrong_word_list[i] = "<r>{}</r>".format(wrong_word)
       return " ".join(wrong_word_list)
+
 
     def transform2_match_str(self, accuracy_list, origin_input):
       pre_mindex_end = 0
@@ -301,11 +308,13 @@ class PronuncAssessFeatures(BasePlugin):
       alignments = self.aligner.align(str1, str2)
       return alignments[0].coordinates
   
+
     def filter_seperator(self, str):
       letter_pattern = re.compile('[^\W\d_ ]+', re.UNICODE)
       letters_only = ' '.join(letter_pattern.findall(str))
 
       return letters_only
+
 
     def extract_text(self, url_msg):
       extractor = urlextract.URLExtract()

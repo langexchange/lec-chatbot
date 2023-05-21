@@ -12,13 +12,12 @@ from argparse import ArgumentParser
 import environ
 import os
 from jinja2 import Environment, FileSystemLoader
-
+from chatbot.db.connection import pool
 
 
 env = environ.Env()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 environ.Env.read_env(os.path.join(BASE_DIR,'env/.dev.env'))
-
 BOT_PASSWORD = env('BOT_PASSWORD')
 BOT_JID = env('BOT_JID')
 LANGEX_XMPP_HOSTNAME = env('LANGEX_XMPP_HOSTNAME')
@@ -28,7 +27,6 @@ APP_BROKERS = env('APP_BROKERS')
 logger = logging.getLogger(__file__)
 
 class EchoBot(slixmpp.ClientXMPP):
-
     """
     A simple Slixmpp bot that will echo messages it
     receives, along with a short thank you message.
@@ -47,15 +45,11 @@ class EchoBot(slixmpp.ClientXMPP):
       self.register_plugin('xep_0054') # Vcard
       self.register_plugin('xep_0066')
 
-      self.add_event_handler("session_start", self.start)
+      self.add_event_handler("session_start", self.session_start)
 
       # Register chatbot stanza
       register_stanza_plugin(Message, LangExBot)
-
-      # Register feature
-      self.register_plugin('PronuncAssessFeatures', module="chatbot.features.pronunc_assess.plugin")
       
-
       # Register ChatBotConsumer
       self.chatBotConsumer =  ChatBotConsumer(bootstrap_servers=APP_BROKERS, group_id="chatbot", auto_offset_reset='latest', enable_auto_commit=False)
       self.chatBotConsumer.register("chathelper-userinfo", self.onBoardUserHandler)
@@ -81,11 +75,15 @@ class EchoBot(slixmpp.ClientXMPP):
     def oob_handler(self):
         print("OOB_handler detected")
 
-    async def start(self, event):
+
+    async def session_start(self, event):
       self.send_presence()
       await self.get_roster()
       await self.update_vcard()
+      await pool.open()
 
+      # This plugin needs resource to be initialized first
+      self.register_plugin('PronuncAssessFeatures', module="chatbot.features.pronunc_assess.plugin")
       # Should call at the end
       await self.chatBotConsumer.initChatBotConsumer()
       
@@ -112,6 +110,7 @@ class EchoBot(slixmpp.ClientXMPP):
       normal_msg.append(LangExBot())
       return normal_msg
     
+
     def onBoardUserHandler(self, new_user):
       """
       {

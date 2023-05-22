@@ -9,8 +9,6 @@ from slixmpp.plugins.base import BasePlugin
 from slixmpp.xmlstream.handler import CoroutineCallback
 from slixmpp.xmlstream.matcher.xpath import MatchXPath
 from slixmpp.xmlstream import  register_stanza_plugin
-from slixmpp.stanza import Iq, Message
-from slixmpp.plugins.xep_0066.stanza import OOB
 
 import io 
 import aiohttp
@@ -20,7 +18,7 @@ from Bio import Align
 import functools
 from jinja2 import Environment, FileSystemLoader
       
-from chatbot.whisper.model import run_asr
+from chatbot.models.whisper.model import run_asr
 from chatbot.features.pronunc_assess.stanza import PronuncAssessStanza
 import mimetypes
 from chatbot.stanza.chatbot import LangExBot
@@ -36,15 +34,17 @@ class PronuncAssessFeatures(BasePlugin):
     """
     name = "Pronunciation Assessment",
     dependencies = {'xep_0030', 'xep_0066'}
-    assess_list = [[0, "You must be a newbie with this english"], [0.3, "You need to practice more :(("], [0.5, "Not very bad, you have some errors"], [0.9, "You are good. A little bit to be perfect"], [1, "Perfect!! You have no error in your pronunciation"]]
+    assess_list = [[0, "You must be a newbie with this language"], [0.3, "You need to practice more :(("], [0.5, "Not very bad, you have some errors"], [0.9, "You are good. A little bit to be perfect"], [1, "Perfect!! You have no error in your pronunciation"]]
     
     supported_commands = {
       "pronunc_assess": {
           "languages_iso_6391": ['af', 'ar', 'az', 'be', 'bg', 'bs', 'ca', 'cs', 'cy', 'da', 'de', 'el', 'en', 'es', 'et', 'fa', 'fi', 'fr', 'gl', 'he', 'hi', 'hr', 'hu', 'hy', 'id', 'is', 'it', 'ja', 'kk', 'kn', 'ko', 'lt', 'lv', 'mi', 'mk', 'mr', 'ms', 'ne', 'nl', 'no', 'pl', 'pt', 'ro', 'ru', 'sk', 'sl', 'sr', 'sv', 'sw', 'ta', 'th', 'tl', 'tr', 'uk', 'ur', 'vi', 'zh'],
-          "languages": ['Afrikaans', 'Arabic', 'Azerbaijani', 'Belarusian', 'Bulgarian', 'Bosnian', 'Catalan', 'Czech', 'Welsh', 'Danish', 'German', 'Greek', 'English', 'Spanish', 'Estonian', 'Persian', 'Finnish', 'French', 'Galician', 'Hebrew', 'Hindi', 'Croatian', 'Hungarian', 'Armenian', 'Indonesian', 'Icelandic', 'Italian', 'Japanese', 'Kazakh', 'Kannada', 'Korean', 'Lithuanian', 'Latvian', 'Maori', 'Macedonian', 'Marathi', 'Malay', 'Nepali', 'Dutch', 'Norwegian', 'Polish', 'Portuguese', 'Romanian', 'Russian', 'Slovak', 'Slovenian', 'Serbian', 'Swedish', 'Swahili', 'Tamil', 'Thai', 'Tagalog', 'Turkish', 'Ukrainian', 'Urdu', 'Vietnamese', 'Chinese'],
 
-          "vocab_schedule": []
-      }
+          "country_iso_31661": ['za', 'dz', 'az', 'by', 'bg', 'ba', 'ad', 'cz', 'gb', 'dk', 'de', 'gr', 'us', 'es', 'ee', 'ir', 'fi', 'fr', 'es', 'il', 'in', 'hr', 'hu', 'am', 'id', 'is', 'it', 'ja', 'kz', 'in', 'kr', 'lt', 'lv', 'nz', 'mk', 'in', 'my', 'np', 'nl', 'no', 'pl', 'pt', 'ro', 'ru', 'sk', 'si', 'rs', 'se', 'tz', 'in', 'th', 'ph', 'tr', 'ua', 'pk', 'vn', 'cn'],
+
+          "languages": ['Afrikaans', 'Arabic', 'Azerbaijani', 'Belarusian', 'Bulgarian', 'Bosnian', 'Catalan', 'Czech', 'Welsh', 'Danish', 'German', 'Greek', 'English', 'Spanish', 'Estonian', 'Persian', 'Finnish', 'French', 'Galician', 'Hebrew', 'Hindi', 'Croatian', 'Hungarian', 'Armenian', 'Indonesian', 'Icelandic', 'Italian', 'Japanese', 'Kazakh', 'Kannada', 'Korean', 'Lithuanian', 'Latvian', 'Maori', 'Macedonian', 'Marathi', 'Malay', 'Nepali', 'Dutch', 'Norwegian', 'Polish', 'Portuguese', 'Romanian', 'Russian', 'Slovak', 'Slovenian', 'Serbian', 'Swedish', 'Swahili', 'Tamil', 'Thai', 'Tagalog', 'Turkish', 'Ukrainian', 'Urdu', 'Vietnamese', 'Chinese'],
+      },
+      "vocab_schedule": [],
     }
 
     def plugin_init(self):
@@ -55,7 +55,8 @@ class PronuncAssessFeatures(BasePlugin):
                      ))
         
         register_stanza_plugin(LangExBot, PronuncAssessStanza)
-        self.template = Environment(loader=FileSystemLoader(os.path.join(BASE_DIR,'templates'))) 
+        template = Environment(loader=FileSystemLoader(os.path.join(BASE_DIR,'templates'))) 
+        self.passess_template = template.get_template('pronunc_assess.html')
         
 
     def post_init(self):
@@ -117,7 +118,6 @@ class PronuncAssessFeatures(BasePlugin):
       result = None
       if command == "pronunc_assess":
         result = await self.handlePronuncAssessment(opts, url, body, msg_stanza["from"])
-
       else: 
         return self.xmpp.send_message(mto=msg_stanza["from"], mbody="Other commands have not been supported yet")
 
@@ -127,7 +127,7 @@ class PronuncAssessFeatures(BasePlugin):
     def sendMessageOnCommand(self, command, result, msg_stanza):
       if command == "pronunc_assess":
         if result["status"] == 1:
-          self.send_pronunc_peformance(result["origin_msg"], result["heard_msg"], result["acc_list"], result["language"], msg_stanza)
+          self.send_pronunc_peformance(result["origin_msg"], result["heard_msg"], result["acc_list"], result["language"], result["country"], msg_stanza)
         elif result["status"] == 0:
           self.xmpp.send_message(mto=msg_stanza["from"], mbody=result["msg"])
 
@@ -164,6 +164,7 @@ class PronuncAssessFeatures(BasePlugin):
         }
       
       language = ""
+      country = ""
       if not opts:
         # TODO: getTargetLanguage from database
         # self.getTargetLanguage(userJid)
@@ -171,9 +172,12 @@ class PronuncAssessFeatures(BasePlugin):
         if raw_target_lang == None: 
           language = "en" #Default language if the user does not have target language
         else:
-          raw_target_lang.lower()
+          raw_target_lang = raw_target_lang.lower()
           hyphen_index = raw_target_lang.find("-")
-          language = raw_target_lang.lower() if hyphen_index == -1 else (raw_target_lang.split("-")[0]).lower()
+          if hyphen_index == -1:
+            language = raw_target_lang
+          else:
+            language, country = raw_target_lang.split("-")
       else:
         language = opts[0]
       
@@ -182,6 +186,10 @@ class PronuncAssessFeatures(BasePlugin):
           "status": 0,
           "msg": "Sorry, Your language has not been supported to perform the assessment. Try: {}".format(self.supported_commands["pronunc_assess"]["languages"])
         }
+      
+      if not country:
+        country_index = self.supported_commands["pronunc_assess"]["languages"].index(language) if len(language) > 2 else self.supported_commands["pronunc_assess"]["languages_iso_6391"].index(language)
+        country = self.supported_commands["pronunc_assess"]["country_iso_31661"][country_index]
       
       audio_file = await self.downloadFile(url)
 
@@ -202,6 +210,7 @@ class PronuncAssessFeatures(BasePlugin):
           "origin_msg": body,
           "heard_msg": heard_msg,
           "language": language,
+          "country": country,
           "acc_list": accuracy_list,
         }
       
@@ -238,22 +247,22 @@ class PronuncAssessFeatures(BasePlugin):
       return result_str
                         
        
-    def send_pronunc_peformance(self, origin_msg, heard_msg, accuracy_list, language_iso, msg_stanza):
+    def send_pronunc_peformance(self, origin_msg, heard_msg, accuracy_list, language_iso, country_iso, msg_stanza):
       crr_per = self.cal_accuracy_per(accuracy_list)
       match_text = self.transform2_match_str(accuracy_list, origin_msg)
       assessment = ""
       for assess_pnt, eval in self.assess_list[::-1]:
          if crr_per >= assess_pnt:
-            assessment = ("{}, your score is {:.2f}, this is how your voice match: ".format(eval, crr_per*100))
+            assessment = ("{}, your score is <score>{}</score>, this is how your voice match: ".format(eval, round(crr_per*100)))
             break
       
       # Transform ISO code to language
       index = self.supported_commands["pronunc_assess"]["languages_iso_6391"].index(language_iso)
-      msg_t = self.template.get_template('pronunc_assess.html')
       msg_params = {
         "language_para": {
+           "country_code": country_iso,
            "text": "Pronunciation assessment in language:",
-           "language": self.supported_commands["pronunc_assess"]["languages"][index],
+           "language": " {}".format(self.supported_commands["pronunc_assess"]["languages"][index]),
         },
         "heard_para": {
           "text": "This is what you said:",
@@ -264,7 +273,7 @@ class PronuncAssessFeatures(BasePlugin):
           "match_text": match_text
         },
       }
-      msg = msg_t.render(msg_params)
+      msg = self.passess_template.render(msg_params)
       
       send_msg = self.xmpp.makeLangExBotMessage(mto = msg_stanza["from"], mbody = msg, mtype=msg_stanza["type"], mfrom=self.xmpp.jid)
       send_msg["langexbot"].append(PronuncAssessStanza())

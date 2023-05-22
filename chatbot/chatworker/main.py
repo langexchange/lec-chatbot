@@ -3,6 +3,7 @@ import environ
 import os
 import logging
 import json
+from aiokafka.errors import KafkaConnectionError
 
 env = environ.Env()
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -49,10 +50,13 @@ class ChatBotConsumer:
     
     async def initChatBotConsumer(self):
       self.consumer = aiokafka.AIOKafkaConsumer("chathelper-userinfo", bootstrap_servers= self.bootstrap_servers, group_id= self.group_id, auto_offset_reset= self.auto_offset_reset, enable_auto_commit= self.enable_auto_commit, value_deserializer = self.value_deserializer)
-      await self.consumer.start()
-      try:
+      try: 
+        await self.consumer.start()
         async for msg in self.consumer:
           self.callHandler(msg)
+      except KafkaConnectionError:
+        logger.warning("Can not connect to kafka, check if it is available")
+        return
       finally:
         await self.consumer.stop()
 

@@ -70,7 +70,8 @@ class EchoBot(slixmpp.ClientXMPP):
       }
       
       # Init Jinja2 template environment
-      self.template = Environment(loader=FileSystemLoader('./assets/templates'))
+      template = Environment(loader=FileSystemLoader('./assets/templates'))
+      self.onboard_template = template.get_template('onboard.html')
 
     def oob_handler(self):
         print("OOB_handler detected")
@@ -123,14 +124,13 @@ class EchoBot(slixmpp.ClientXMPP):
         return
       
       # Create onboard message
-      msg_t = self.template.get_template('onboard.html')
       msg_params = {
         "hello_msg": self.onBoardHelloMessages["hello"] % (new_user["fullname"]), 
         "feature_intro": self.onBoardHelloMessages["intro_feature"],
         "features": self.chatbotFeatureDescriptions 
       }
       
-      msg = msg_t.render(msg_params)
+      msg = self.onboard_template.render(msg_params)
       send_msg = self.makeLangExBotMessage(mto = new_user["jid"], mbody = msg, mtype="chat", mfrom=self.jid)
       send_msg["langexbot"].append(OnBoard())
       send_msg.send()

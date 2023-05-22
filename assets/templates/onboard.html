@@ -1,16 +1,1 @@
-<langex-chatbot-para>{{ hello_msg }}</langex-chatbot-para>
-<langex-chatbot-para>{{ feature_intro }}</langex-chatbot-para>
-{% if features %}
-<langex-chatbot-features> 
-  {% for _, f in features.items() %}
-    <langex-chatbot-feature>
-      <feature-name> {{ f["name"] }} :</feature-name> <langex-chatbot-span> {{ f["description"] }} </langex-chatbot-span>
-      <feature-example>
-        <langex-chatbot-title>Example:</langex-chatbot-title>
-        <langex-chatbot-span>  {{f["example"]}}</langex-chatbot-span>
-      </feature-example>
-      <feature-note>{{f["addition_note"]}}</feature-note>
-    </langex-chatbot-feature>
-  {% endfor %}
-</langex-chatbot-features>
-{% endif %}
+<langex-chatbot-para>Hello <langex-username>{{ user_name }} !!!</langex-username> Welcome to <langex-icon></langex-icon>. I am LangExBot &#x1F916;.</langex-chatbot-para><langex-chatbot-para>I can help you to practice various of languages. Here are the list of features I can support:</langex-chatbot-para>{% if features %}<langex-chatbot-features>{% for feature_code, f in features.items() %}<langex-chatbot-feature><feature-description><feature-name fcode = '{{ feature_code }}'> {{ f["name"] }}: </feature-name><langex-chatbot-span> {{ f["description"] }}.</langex-chatbot-span></feature-description><feature-note><langex-chatbot-title>Note: </langex-chatbot-title><langex-chatbot-span> {{f["addition_note"]}}.</langex-chatbot-span></feature-note></langex-chatbot-feature>{% endfor %}</langex-chatbot-features>{% endif %}

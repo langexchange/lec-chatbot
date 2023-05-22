@@ -58,15 +58,9 @@ class EchoBot(slixmpp.ClientXMPP):
       self.chatbotFeatureDescriptions = { # TODO: Need have a Langex Plugin manager when the app scales.
          "pronunc_assess": {
             "name": "Pronunciation Assessment",
-            "description": "I can help you to evaluate your pronunciation whenever you add your recording voice (See tool bar) accompanying with the text you have said",
-            "example": "MOCK",
-            "addition_note": "The default language will be accessed is your target language. If you want to assess another language please use command !pronunc_assess*{your_language}*: {The text you intend to say}" 
+            "description": "I can help you to evaluate your pronunciation whenever you add your recording voice (See tool bar <recording-icon></recording-icon>) accompanying with the text you have said",
+            "addition_note": "The default language will be accessed is your target language. If you want to assess another language please use command !pronunc_assess*{your_language}: {The text you intend to say}. Example: '!pronunc_assess*en: I am chat bot' (which uses language code) or '!pronunc_assess*English: I am chat bot'" 
          }
-      }
-
-      self.onBoardHelloMessages = {
-        "hello": "Hello %s, Welcome to LangExchange community. I'am LangEx bot " + u'\u1F916' + "!!",
-        "intro_feature": "I can help you to practice various of languages. Here are list of features I can support:"
       }
       
       # Init Jinja2 template environment
@@ -125,8 +119,7 @@ class EchoBot(slixmpp.ClientXMPP):
       
       # Create onboard message
       msg_params = {
-        "hello_msg": self.onBoardHelloMessages["hello"] % (new_user["fullname"]), 
-        "feature_intro": self.onBoardHelloMessages["intro_feature"],
+        "user_name": new_user["fullname"], 
         "features": self.chatbotFeatureDescriptions 
       }
       

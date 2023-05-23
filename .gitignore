@@ -1,5 +1,6 @@
 .vscode
 __pycache__
 
-**/models/*
+**/models/*/models
 test.py
+*.wav

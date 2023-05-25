@@ -137,8 +137,16 @@ class PronuncAssessFeatures(BasePlugin):
 
 
     async def downloadFile(self, url: str) -> io.BytesIO:
+      # Forward url to file server in case the client sends to localhost
+      PLATFORM = env("PLATFORM")
+      reg = r'(http[s]?://)localhost(/.*)$'
+      if (match := re.search(reg, url))  and PLATFORM == "DOCKER":
+        FILE_SERVICE = env("FILE_SERVICE")
+        url = "{}{}{}".format(match.group(1), FILE_SERVICE, match.group(2))
+
       # TODO: Feed each chunk into the whisper for optimizing
-      async with aiohttp.ClientSession() as session:
+      MODE = env("MODE")
+      async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False) if MODE == "development" else None) as session:
         async with session.get(url) as response:
           content = await response.content.read()
           return io.BytesIO(content)

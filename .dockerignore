@@ -1,5 +1,8 @@
 .vscode
 __pycache__
 
-**/models/*/models
+**/models/*/models/*
 *.wav
+*.webm
+*.mp3
+**/test/*

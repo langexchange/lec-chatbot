@@ -4,12 +4,12 @@ import os
 import logging
 import json
 from aiokafka.errors import KafkaConnectionError
+from settings import ROOT_DIR
 
 env = environ.Env()
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-environ.Env.read_env(os.path.join(BASE_DIR,'env/.dev.env'))
+environ.Env.read_env(os.path.join(ROOT_DIR,'env/.dev.env'))
 APP_BROKERS = env('APP_BROKERS')
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class ChatBotConsumer:

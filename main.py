@@ -13,18 +13,20 @@ import environ
 import os
 from jinja2 import Environment, FileSystemLoader
 from chatbot.db.connection import pool
+from settings import ROOT_DIR
+import debugpy
 
 
 env = environ.Env()
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-environ.Env.read_env(os.path.join(BASE_DIR,'env/.dev.env'))
+environ.Env.read_env(os.path.join(ROOT_DIR,'env/.dev.env'))
 BOT_PASSWORD = env('BOT_PASSWORD')
 BOT_JID = env('BOT_JID')
 LANGEX_XMPP_HOSTNAME = env('LANGEX_XMPP_HOSTNAME')
 LANGEX_XMPP_PORT = env('LANGEX_XMPP_PORT')
 APP_BROKERS = env('APP_BROKERS')
+MODE = env('MODE')
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 class EchoBot(slixmpp.ClientXMPP):
     """

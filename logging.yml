@@ -1,0 +1,26 @@
+version: 1
+formatters:
+  simple:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: simple
+    stream: ext://sys.stdout
+  #WARNING: Dont delete this file-handler as it is read in the codebase to change the log file (filename) according to what is specified.
+  file-handler:
+    class: logging.FileHandler
+    level: DEBUG
+    formatter: simple
+    filename: "logs/app.log"
+    encoding: "utf8"
+loggers:
+  chat:
+    level: DEBUG
+    handlers: [file-handler]
+root:
+  level: DEBUG
+  handlers: [file-handler, console]
+
+disable_existing_loggers: False

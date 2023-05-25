@@ -4,27 +4,23 @@ from chatbot.models.whisper.ctranslate.utils import (
 )
 import logging
 import torch
-# import whisper
 from faster_whisper import WhisperModel
 from threading import Lock
 from typing import BinaryIO, Union, Optional
 import ffmpeg
 import numpy as np
 import environ
-import settings
+from settings import ROOT_DIR
 
 logger = logging.getLogger(__name__)
 logger.info("Starting loading model: ")
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR,'env/.dev.env'))
+environ.Env.read_env(os.path.join(ROOT_DIR,'env/.dev.env'))
 
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 whisper_model_name= env('MODEL_NAME')
-model_base_dir = os.path.join("{}/models".format(BASE_DIR))
-faster_whisper_model_path = os.path.join("{}/faster_whisper".format(model_base_dir), whisper_model_name)
-whisper_model_path = os.path.join("{}/whisper".format(model_base_dir), whisper_model_name)
+faster_whisper_model_path = os.path.join("{}/model".format(BASE_DIR), whisper_model_name)
 faster_whisper_model_converter(whisper_model_name, faster_whisper_model_path)
 
 if torch.cuda.is_available():

@@ -5,12 +5,12 @@ import logging
 from psycopg_pool import AsyncConnectionPool
 import environ
 import os
+from settings import ROOT_DIR
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 env = environ.Env()
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-environ.Env.read_env(os.path.join(BASE_DIR,'env/.dev.env'))
+environ.Env.read_env(os.path.join(ROOT_DIR,'env/.dev.env'))
 LANGEX_CHATDB_STRING = env('LANGEX_CHATDB_STRING')
 
 pool = AsyncConnectionPool(LANGEX_CHATDB_STRING, open=False)

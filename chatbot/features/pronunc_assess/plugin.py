@@ -24,7 +24,11 @@ import mimetypes
 from chatbot.stanza.chatbot import LangExBot
 import os
 from chatbot.db.vcard.query import vcard_model
+import environ
+from settings import ROOT_DIR
 
+env = environ.Env()
+environ.Env.read_env(os.path.join(ROOT_DIR,'env/.dev.env'))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 

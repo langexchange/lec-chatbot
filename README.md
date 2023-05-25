@@ -34,3 +34,16 @@ sudo apt update && sudo apt install ffmpeg
 ```xml
   <pronunc_assess xmlns="langex:chatbot:pronunc_assess"> </pronunc_assess>
 ```
+
+## 3. Docker 
+### 3.1. Build image
+To effectively build the image by not reinstalling all packages whenever `requirements.txt` changed. You should execute `sudo make config-dockerd` to config `daemon.json` for docker daemon. Be careful that command will override all current configurations `daemon.json`. If it is in case, you should manually append configuration in `daemon.json` file in the current working directory to that system configuration `daemon.json` file.
+
+### 3.2 Run container
+Model is installed at `/root/.cache/huggingface` and `/usr/local/src/lec-chatbot/chatbot/models/whisper/model`. Please mount it to avoid downloading model whenever run the container.
+```console
+docker run -d --rm narutosimaha/lec-chatbot
+```
+
+## 4. Deployment backlog
+[ ] Set up certificate for file service.

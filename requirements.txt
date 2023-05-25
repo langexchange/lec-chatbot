@@ -1,8 +1,6 @@
 slixmpp==1.8.3
 dnspython==2.3.0
-faster-whisper==0.4.1
-torch
-openai-whisper==20230124
+faster-whisper==0.5.1
 urlextract
 idna
 uritools
@@ -10,9 +8,13 @@ platformdirs
 biopython==1.81
 django-environ==0.10.0
 aiohttp==3.8.4
-psycopg[c,pool]==3.1.7
-
+psycopg[binary]==3.1.7
+ffmpeg-python==0.2.0
 aiokafka==0.8.0
 Jinja2==3.1.2
 pycountry==22.3.5
 lxml==4.9.2
+transformers==4.29.2
+debugpy==1.6.7
+pyyaml==6.0
+psycopg[pool]==3.1.7

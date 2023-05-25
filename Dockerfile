@@ -1,9 +1,14 @@
-FROM python:3.10.11-bullseye
+FROM bitnami/pytorch
 
-WORKDIR /usr/local/src/chatbot
+USER root
 
-COPY . .
+# #ffmpeg for whisper
+RUN apt update
+RUN apt install -y ffmpeg
 
+# Build app dependencies
+COPY requirements.txt .
 RUN pip install -r requirements.txt
+COPY . .
 
 CMD ["python","main.py","-d"]

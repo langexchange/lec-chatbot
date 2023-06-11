@@ -7,7 +7,7 @@ services:
     # command: ["python", "main.py", "-d"]
     environment: 
       - MODEL_NAME=small
-      - BOT_PASSWORD=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODc4NzIxMTYsImlhdCI6MTY3Nzg2NzMxNywiaWQiOiJjaGF0Ym90In0.9xbn9c9m9BJIPzimCgtPz-j29azywuczHlQXw7bSGRo
+      - BOT_PASSWORD=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODc4NzIxMTYsImlhdCI6MTY3Nzg2NzMxNywiaWQiOiJjaGF0Ym90In0.oBO_gjkDcjot2A9guG05_ku51H45l9D8IKPHRs3daWc
       - BOT_JID=chatbot@localhost
       - LANGEX_XMPP_HOSTNAME=lec-chatserver
       - LANGEX_XMPP_PORT=5222
@@ -17,8 +17,8 @@ services:
       - FILE_SERVICE=lec-chatgw
       - MODE=development
     volumes:
-      - model:/app/lec-chatbot/chatbot/models/whisper/model
-      - model_cache:/root/.cache/huggingface
+      - model:/app/chatbot/models/whisper/model
+      - model_cache:/.cache/huggingface
       - ./logs:/app/lec-chatbot/logs
     networks:
       - vutl

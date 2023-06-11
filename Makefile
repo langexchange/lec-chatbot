@@ -10,3 +10,6 @@ build:
 
 run:
 	docker compose up -force-recreate -d
+
+test:
+	pytest

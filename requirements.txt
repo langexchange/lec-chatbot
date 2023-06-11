@@ -18,3 +18,4 @@ transformers==4.29.2
 debugpy==1.6.7
 pyyaml==6.0
 psycopg[pool]==3.1.7
+pytest==7.3.1

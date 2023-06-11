@@ -2,7 +2,8 @@
   {
     "jid": "123@localhost",
     "fullname": "Vu Tran",
-    "nickname": "Jax Vu"
+    "nickname": "Jax Vu",
+    "is_created": true
   },
   {
     "jid": "213@localhost",
@@ -24,7 +25,12 @@
     "avatar_url": "https://bountycdn.azureedge.net/~/media/b9bedc08353044c5b7e354858f0c4db1.ashx?la=en"
   },
   {
-    "jid": "hello@localhost",
+    "jid": "hello123@localhost",
+    "fullname": "Vu Tran",
+    "is_created": true
+  },
+  {
+    "jid": "hello12@localhost",
     "fullname": "Vu Tran",
     "is_created": true
   }

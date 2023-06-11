@@ -5,6 +5,7 @@ from slixmpp.stanza import Message
 
 from chatbot.chatworker.main import ChatBotConsumer
 from chatbot.stanza.chatbot import LangExBot, OnBoard
+from chatbot.db.rosterusers.query import roster_user_model
 
 import json
 import logging
@@ -15,7 +16,7 @@ from jinja2 import Environment, FileSystemLoader
 from chatbot.db.connection import pool
 from settings import ROOT_DIR
 import debugpy
-
+roster_user_model
 
 env = environ.Env()
 environ.Env.read_env(os.path.join(ROOT_DIR,'env/.dev.env'))
@@ -108,7 +109,7 @@ class EchoBot(slixmpp.ClientXMPP):
       return normal_msg
     
 
-    def onBoardUserHandler(self, new_user):
+    async def onBoardUserHandler(self, new_user):
       """
       {
         "jid": "user_id1@localhost",
@@ -119,6 +120,11 @@ class EchoBot(slixmpp.ClientXMPP):
       
       if "is_created" not in new_user or new_user["is_created"] == False:
         return
+      
+      # Create chatbot contact in new user roster
+      await roster_user_model.addRosterContact("chatbot", new_user["jid"])
+      user_id = new_user["jid"].split("@")[0]
+      await roster_user_model.addRosterContact(user_id, "chatbot@{}".format(LANGEX_XMPP_HOSTNAME))
       
       # Create onboard message
       msg_params = {

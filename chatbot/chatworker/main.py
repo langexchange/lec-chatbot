@@ -31,12 +31,12 @@ class ChatBotConsumer:
       self.handlers[topicName] = handlerInstance
     
 
-    def callHandler(self, message):
+    async def callHandler(self, message):
       topicName = message.topic
       if topicName not in self.handlers:
         logger.error('There is no handler for this {}'.format(topicName))
       logger.info('Call handler {} for msg {}'.format(self.handlers[topicName], message.value))
-      self.handlers[topicName](message.value)
+      await self.handlers[topicName](message.value)
 
     
     def value_deserializer(self, value: bytes) -> dict:
@@ -53,7 +53,7 @@ class ChatBotConsumer:
       try: 
         await self.consumer.start()
         async for msg in self.consumer:
-          self.callHandler(msg)
+          await self.callHandler(msg)
       except KafkaConnectionError:
         logger.warning("Can not connect to kafka, check if it is available")
         return

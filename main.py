@@ -116,6 +116,7 @@ class EchoBot(slixmpp.ClientXMPP):
         "is_created": true,
       },
       """
+      
       if "is_created" not in new_user or new_user["is_created"] == False:
         return
       
@@ -128,6 +129,7 @@ class EchoBot(slixmpp.ClientXMPP):
       msg = self.onboard_template.render(msg_params)
       send_msg = self.makeLangExBotMessage(mto = new_user["jid"], mbody = msg, mtype="chat", mfrom=self.jid)
       send_msg["langexbot"].append(OnBoard())
+      logger.info("New user onboard {}".format(new_user["jid"]))
       send_msg.send()
     
 

@@ -19,11 +19,12 @@ import os
 from chatbot.db.vcard.query import vcard_model
 import environ
 from settings import ROOT_DIR
+import logging
 
 env = environ.Env()
 environ.Env.read_env(os.path.join(ROOT_DIR,'env/.dev.env'))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
+logger = logging.getLogger(__name__)
 
 class PronuncAssessFeatures(BasePlugin):
     """
@@ -199,8 +200,12 @@ class PronuncAssessFeatures(BasePlugin):
       audio_file = await self.downloadFile(url)
 
       # Optimize the model
-      transcribe_result = whisperModel.inference(audio_file, "transcribe", language)
-
+      try: 
+        transcribe_result = whisperModel.inference(audio_file, "transcribe", language)
+      except Exception as e:
+        logger.exception("Unhandled error")
+        raise e
+      
       heard_msg = transcribe_result["text"]
 
       filter_msg = self.filter_seperator(body) # Filter origin text before matching

@@ -1,10 +1,3 @@
-"""
-Creating a Slixmpp Plugin
-
-This is a minimal implementation of XEP-0077 to serve
-as a tutorial for creating Slixmpp plugins.
-"""
-
 from slixmpp.plugins.base import BasePlugin
 from slixmpp.xmlstream.handler import CoroutineCallback
 from slixmpp.xmlstream.matcher.xpath import MatchXPath
@@ -18,7 +11,7 @@ from Bio import Align
 import functools
 from jinja2 import Environment, FileSystemLoader
       
-from chatbot.models.whisper.model import run_asr
+from chatbot.models.whisper.model import whisperModel
 from chatbot.features.pronunc_assess.stanza import PronuncAssessStanza
 import mimetypes
 from chatbot.stanza.chatbot import LangExBot
@@ -206,7 +199,7 @@ class PronuncAssessFeatures(BasePlugin):
       audio_file = await self.downloadFile(url)
 
       # Optimize the model
-      transcribe_result = run_asr(audio_file, "transcribe", language, method = "faster-whisper", encode = True)
+      transcribe_result = whisperModel.inference(audio_file, "transcribe", language)
 
       heard_msg = transcribe_result["text"]
 

@@ -33,5 +33,10 @@
     "jid": "hello12@localhost",
     "fullname": "Vu Tran",
     "is_created": true
+  },
+  {
+    "jid": "7ba1b5ef-8950-4a70-aa4b-69e2fae7a8c7@localhost",
+    "fullname": "Vu Tran",
+    "is_created": true
   }
 ]
